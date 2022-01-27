@@ -1,23 +1,48 @@
 import { Box, Text, TextField, Image, Button } from "@skynexui/components";
-import { React, useState } from "react";
+import React from "react";
 import appConfig from "../config.json";
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseClient = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
 
 export default function ChatPage() {
-  const [message, setMessage] = useState("");
-  const [messageList, setMessageList] = useState([]);
+  const [message, setMessage] = React.useState("");
+  const [messageList, setMessageList] = React.useState([]);
+  
+  React.useEffect(() => {
+    supabaseClient
+      .from('mensagens')
+      .select('*')
+      .order('id', {ascending:false})
+      .then(({data}) => {
+          // console.log('dados da consulta no Supabase', data);
+          setMessageList(data);
+      })
+  }, []);
+  
 
   function handleNewMessage(newMessage) {
     const mensagem = {
-      id: messageList.lenght + 1,
-      from: "Diego Rondão",
+      // id: messageList.lenght + 1,
+      from: "diegorondao",
       text: newMessage,
     };
 
-    setMessageList([mensagem, ...messageList]);
+    supabaseClient
+    .from('mensagens')
+    .insert([
+      mensagem
+    ])
+    .then(({data})=>{
+      setMessageList([
+        data[0], 
+        ...messageList
+      ]);
+
+    })
     setMessage("");
   }
 
-  // ./Sua lógica vai aqui
   return (
     <Box
       styleSheet={{
@@ -173,7 +198,7 @@ function MessageList(props) {
                   display: "inline-block",
                   marginRight: "8px",
                 }}
-                src={`https://github.com/diegorondao.png`}
+                src={`https://github.com/${mensagem.from}.png`}
               />
               <Text tag="strong">{mensagem.from}</Text>
               <Text
